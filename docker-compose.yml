@@ -1,0 +1,72 @@
+services:
+  postgres:
+    image: public.ecr.aws/docker/library/postgres:16.8-alpine
+    container_name: shuks-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: shuks
+      POSTGRES_PASSWORD: shuks_dev_password
+      POSTGRES_DB: shuks_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - shuks_pgdata:/var/lib/postgresql/data
+      - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shuks -d shuks_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: public.ecr.aws/docker/library/redis:7.4.2-alpine
+    container_name: shuks-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - shuks_redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  livekit:
+    image: docker.io/livekit/livekit-server:v1.8.2
+    container_name: shuks-livekit
+    restart: unless-stopped
+    command: --dev --bind 0.0.0.0
+    ports:
+      - "7880:7880"
+      - "7881:7881"
+
+  agent-orchestrator:
+    build:
+      context: ./services/agent-orchestrator
+      dockerfile: Dockerfile
+    container_name: shuks-agent-orchestrator
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://shuks:shuks_dev_password@postgres:5432/shuks_db
+      REDIS_URL: redis://redis:6379/0
+      LIVEKIT_URL: ws://livekit:7880
+      LIVEKIT_API_KEY: devkey
+      LIVEKIT_API_SECRET: secret
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.8-flash}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
+      LLM_MODEL: ${LLM_MODEL:-gpt-4o-mini}
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  shuks_pgdata:
+  shuks_redisdata:
