@@ -126,12 +126,17 @@ Two real 2-speaker `.wav` call recordings are included in `apps/web/public/recor
      - Once complete, the **Diarized Audio Transcript Carved Out by Shuks AI** appears in the right-hand Call Notes panel, and Shuks AI posts a summary in the chat asking if you want to create the milestone payment plan to hold your funds in PayPal Escrow and send the offer to the artisan.
    - Click **Yes, Create Escrow Plan & Send to Marcus Rivera** (or reply in the chat box, e.g., `"Yes, create the plan and send it to Marcus"`).
 
-3. **Test Scenario 2 — No Fee Mentioned (`conversation_2.wav`):**
+3. **Test Scenario 2 — No Fee Mentioned (`conversation_2.wav`) & Customizing Milestones in Chat:**
    - Click **Clear Thread** in the top-right header of the workspace to reset the session.
    - Click **Test Call Recordings (2 Scenarios)** and click **Send conversation_2.wav to Shuks AI**.
    - **What happens:**
      - Shuks AI summarizes what was discussed, detects that **payment was never mentioned on the call** (`paymentMentioned: false`), and asks in chat whether you want help planning a financial budget and milestone structure for the job.
-   - Reply in the chat input (for example: `"Yes, help me plan a $140 budget split into $40 on arrival and $100 on completion, and send it to Marcus"`) or click the approval button to generate the milestone plan.
+   - **How to Add or Customize Milestones via Natural Chat (Shuks AI Picks It Up Dynamically):**
+     - In the chat input box at the bottom, type your own budget and milestone breakdown in plain English—for example:
+       `"Yes, help me plan a $180 budget across 3 milestones: $50 on arrival, $70 after rough-in, and $60 on final inspection, and send it to Marcus"`
+       *(or `"Split it into $40 and $60 instead and send it"`).*
+     - **Shuks AI (`ShuksChatMediator`)** parses your chat message, dynamically builds those exact milestones (`M1`, `M2`, `M3`) and USD amounts in the right-hand **PayPal Escrow Plan** panel, posts a confirmation in chat, and unlocks PayPal Checkout for that exact total.
+     - You can also adjust any milestone's dollar input directly inside the **PayPal Escrow Plan** card before funding, and the total contract value recalculates automatically.
 
 4. **Test Side-by-Side Buyer + Artisan Split View, Proof-of-Work Gate, and PayPal Withdrawal:**
    - In the top-right header of the workspace, click **Split View: Buyer + Artisan**.
@@ -143,9 +148,12 @@ Two real 2-speaker `.wav` call recordings are included in `apps/web/public/recor
    - **Release Milestone Payout (Buyer Pane):** Now that proof has been submitted, the **Release $...** and **Dispute** buttons unlock in the Buyer column. Click **Release $...** on Milestone 1.
    - **Connect PayPal & Withdraw (Artisan Pane):** In the Artisan column's **Artisan PayPal Earnings & Withdrawal** wallet card, click **Log in with PayPal to Connect Payouts** -> click **Fill Test Account** -> click **Log In & Connect PayPal**, then click **Withdraw to PayPal Now** to transfer the released balance and generate a transfer receipt.
 
-5. **Test Shareable Contract Link, Mid-Job Change Orders, and AI Dispute Arbitration:**
+5. **Test Adding Mid-Job Milestones (Change Orders), Shareable Contract Links, and AI Dispute Arbitration:**
+   - **Adding a New Milestone Mid-Job (`+ Add Mid-Job Extra Work`):**
+     - Inside the **PayPal Escrow Plan** panel, click **+ Add Mid-Job Extra Work (Change Order)**.
+     - Enter a description of newly discovered work (e.g., `"Replace corroded secondary fitting inside wall"`) and a dollar amount (e.g., `$45`), then click **Add Amendment**.
+     - **Shuks AI (`ChangeOrderMediator`)** compares the extra work against the original call transcript, appends the new **Amendment Milestone (`Change Order` badge)** to the milestone list, updates the total contract value, and posts the amendment notice in the shared chat.
    - **Shareable Artisan Contract Link:** Click **Copy Link** (or the external link icon) at the top of the Buyer Escrow panel to open `/contract/art-marcus-plumbing`, where an external artisan can review the checklist, connect their PayPal email, and upload Proof-of-Work photos without navigating the main marketplace.
-   - **Mid-Job Change Order:** Click **+ Add Mid-Job Extra Work (Change Order)** in the Escrow panel, describe newly discovered work and an amount, and click **Add Amendment** to have the `ChangeOrderMediator` agent append an Amendment Milestone (`M3`).
    - **AI Dispute Arbitration:** On a submitted milestone, click **Dispute** in the Buyer column, enter the issue description, and click **Run AI Dispute Arbitration** to have the `DisputeArbiterAgent` cross-examine the call transcript and proof-of-work and compute a recommended PayPal split settlement.
 
 ---
