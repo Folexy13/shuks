@@ -600,7 +600,6 @@ export const useShuksStore = create<ShuksStoreState>()(
         currentUser: state.currentUser,
         buyerCoordinates: state.buyerCoordinates,
         buyerAddressLabel: state.buyerAddressLabel,
-        sessionsByArtisanId: state.sessionsByArtisanId,
       }),
     }
   )

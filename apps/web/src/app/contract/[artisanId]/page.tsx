@@ -33,16 +33,47 @@ interface ServerContractState {
   messages: ChatMessage[];
 }
 
-function fileToBase64(file: File): Promise<string> {
+function compressImageToJpegBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onloadend = () => {
-      const res = reader.result;
-      if (typeof res === "string" && res.includes(",")) {
-        resolve(res.split(",")[1]);
-      } else {
-        reject(new Error("Could not encode file"));
+    reader.onload = () => {
+      const dataUrl = reader.result;
+      if (typeof dataUrl !== "string") {
+        reject(new Error("Could not read image file"));
+        return;
       }
+      const img = new Image();
+      img.onload = () => {
+        const maxDim = 900;
+        let width = img.width || 640;
+        let height = img.height || 480;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          resolve(dataUrl.split(",")[1] || "");
+          return;
+        }
+        ctx.drawImage(img, 0, 0, width, height);
+        const jpegUrl = canvas.toDataURL("image/jpeg", 0.78);
+        resolve(jpegUrl.split(",")[1] || "");
+      };
+      img.onerror = () => {
+        const fallback = dataUrl.includes(",") ? dataUrl.split(",")[1] : "";
+        if (fallback) resolve(fallback);
+        else reject(new Error("Unsupported image format"));
+      };
+      img.src = dataUrl;
     };
     reader.onerror = () => reject(new Error("File read failed"));
     reader.readAsDataURL(file);
@@ -134,7 +165,7 @@ export default function ShareableContractPage({
     setErrorMessage("");
 
     try {
-      const imageBase64 = await fileToBase64(file);
+      const imageBase64 = await compressImageToJpegBase64(file);
       const res = await fetch(
         `/api/jobs/${encodeURIComponent(artisanId)}/verify-proof`,
         {
@@ -143,7 +174,7 @@ export default function ShareableContractPage({
           body: JSON.stringify({
             milestoneId,
             imageBase64,
-            imageMimeType: file.type || "image/jpeg",
+            imageMimeType: "image/jpeg",
             artisanNotes: proofNotes[milestoneId] || "",
           }),
         }
@@ -161,6 +192,7 @@ export default function ShareableContractPage({
       );
     } finally {
       setVerifyingMsId(null);
+      event.target.value = "";
     }
   };
 
