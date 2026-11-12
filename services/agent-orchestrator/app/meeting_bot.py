@@ -421,6 +421,52 @@ async def dispatch_meeting_bot(artisan_id: str, raw_url: str) -> dict[str, Any]:
 
     silence_wav = base_data_dir / "bot_silence.wav"
     card_y4m = base_data_dir / "shuks_bot_card.y4m"
+    if not silence_wav.exists():
+        subprocess.run(
+            [
+                "ffmpeg",
+                "-y",
+                "-f",
+                "lavfi",
+                "-i",
+                "anullsrc=r=16000:cl=mono",
+                "-t",
+                "5",
+                str(silence_wav),
+            ],
+            check=False,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    if not card_y4m.exists():
+        logo_src = (
+            base_data_dir.parent.parent
+            / "apps"
+            / "web"
+            / "public"
+            / "shuks_logo.jpeg"
+        )
+        if logo_src.exists():
+            subprocess.run(
+                [
+                    "ffmpeg",
+                    "-y",
+                    "-loop",
+                    "1",
+                    "-i",
+                    str(logo_src),
+                    "-vf",
+                    "scale=640:360:force_original_aspect_ratio=decrease,pad=640:360:(ow-iw)/2:(oh-ih)/2:color=#F6F5F0,format=yuv420p",
+                    "-t",
+                    "2",
+                    "-r",
+                    "15",
+                    str(card_y4m),
+                ],
+                check=False,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
 
     chrome_cmd = [
         "/usr/bin/google-chrome",
